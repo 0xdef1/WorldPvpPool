@@ -97,4 +97,12 @@ contract WorldPvpPoolTest is Test {
         gov.execute(targets, values, calldatas, keccak256("test proposal"));
         vm.stopPrank();
     }
+
+    function test_transferUSA() public {
+        address alice = vm.addr(1);
+        vm.prank(potus);
+        ERC20(usaToken).transfer(alice, 100 ether);
+        assertEq(ERC20(usaToken).balanceOf(alice), 97.5 ether);
+        console.log(ERC20(usaToken).balanceOf(alice));
+    }
 }
