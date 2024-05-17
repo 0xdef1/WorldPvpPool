@@ -3,7 +3,7 @@ pragma solidity >=0.8.23;
 import {WorldPvpPool} from "./WorldPvpPool.sol";
 
 contract WorldPvpPoolFactory {
-    mapping (address => address) public poolForToken;
+    mapping(address => address) public poolForToken;
     uint256 public numPools;
     address[] pools;
 

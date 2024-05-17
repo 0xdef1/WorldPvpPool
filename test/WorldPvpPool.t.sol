@@ -4,7 +4,6 @@ pragma solidity >=0.8.23;
 import {Test, console} from "forge-std/Test.sol";
 import {WorldPvpPool, ERC20, WorldPvpPoolGovernor, GovernorCountingSimple} from "../src/WorldPvpPool.sol";
 
-
 // Decided not to mock country tokens, since source isn't verified.
 // Instead, we fork mainnet state and run against the real contract.
 // Tests should be run with --fork-url option, with a Base mainnet rpc.
@@ -32,7 +31,7 @@ contract WorldPvpPoolTest is Test {
 
     function test_DepositWithdraw() public {
         uint256 bal = ERC20(usaToken).balanceOf(potus);
-        
+
         vm.startPrank(potus);
         ERC20(usaToken).approve(address(pool), bal);
         pool.deposit(bal);
@@ -90,7 +89,7 @@ contract WorldPvpPoolTest is Test {
         vm.roll(start + gov.votingDelay() + gov.votingPeriod() + 3);
         vm.startPrank(potus);
         gov.queue(targets, values, calldatas, keccak256("test proposal"));
-        
+
         // Execute the proposal
         vm.roll(start + gov.votingDelay() + gov.votingPeriod() + 4);
         vm.warp(gov.proposalEta(proposalId) + 1);

@@ -13,7 +13,6 @@ import "openzeppelin-contracts/contracts/governance/extensions/GovernorVotesQuor
 import "openzeppelin-contracts/contracts/governance/extensions/GovernorTimelockControl.sol";
 
 contract WorldPvpPool is ERC20, ERC20Votes, ERC20Permit {
-
     address public countryToken;
     address public governor;
     address public timelock;
@@ -31,7 +30,7 @@ contract WorldPvpPool is ERC20, ERC20Votes, ERC20Permit {
     event Withdraw(address to, uint256 amountBurned);
     event Initialize(address countryToken, address timelock, address governor);
 
-    modifier lock {
+    modifier lock() {
         if (unlocked != 1) revert Reentrant();
         unlocked = 2;
         _;
@@ -43,26 +42,25 @@ contract WorldPvpPool is ERC20, ERC20Votes, ERC20Permit {
         _;
     }
 
-    constructor(address _countryToken) 
-        ERC20("WorldPvp Pool", "WPVP-POOL") 
-        ERC20Permit("WorldPvp Pool") 
-    {
+    constructor(address _countryToken) ERC20("WorldPvp Pool", "WPVP-POOL") ERC20Permit("WorldPvp Pool") {
         countryToken = _countryToken;
     }
 
     function initialize() external {
-        if (governor != address(0) || timelock != address(0)) revert AlreadyInitialized();
+        if (governor != address(0) || timelock != address(0)) {
+            revert AlreadyInitialized();
+        }
 
         address[] memory proposers = new address[](0);
         address[] memory executors = new address[](0);
 
         TimelockController t = new TimelockController(86400, proposers, executors, address(this));
         WorldPvpPoolGovernor g = new WorldPvpPoolGovernor(IVotes(address(this)), t);
-        
+
         t.grantRole(t.PROPOSER_ROLE(), address(g));
         t.grantRole(t.EXECUTOR_ROLE(), address(g));
         t.renounceRole(t.DEFAULT_ADMIN_ROLE(), address(this));
-        
+
         timelock = address(t);
         governor = address(g);
 
@@ -88,10 +86,24 @@ contract WorldPvpPool is ERC20, ERC20Votes, ERC20Permit {
         emit Withdraw(msg.sender, amount);
     }
 
+    /**
+     * Danger zone
+     *
+     * Perform an arbitrary call from this contract. This is necessary because game
+     * contracts aren't verified and we don't know how to use nukes.
+     *
+     * This is non-reentrant (shared lock with mint and withdraw)
+     *
+     * Only governance may execute this call (a vote must pass and it's behind a
+     * timelock)
+     *
+     * Don't allow calls into this contract or the country token contract to prevent
+     * grief proposals.
+     */
     function arbitraryCall(address who, bytes calldata data) external lock onlyGovernance {
         if (who == address(this) || who == countryToken) revert NaughtyCall();
 
-        (bool success, ) = who.call(data);
+        (bool success,) = who.call(data);
         require(success);
 
         emit ArbitraryCall(who, data);
@@ -106,10 +118,17 @@ contract WorldPvpPool is ERC20, ERC20Votes, ERC20Permit {
     }
 }
 
-contract WorldPvpPoolGovernor is Governor, GovernorSettings, GovernorCountingSimple, GovernorVotes, GovernorVotesQuorumFraction, GovernorTimelockControl {
+contract WorldPvpPoolGovernor is
+    Governor,
+    GovernorSettings,
+    GovernorCountingSimple,
+    GovernorVotes,
+    GovernorVotesQuorumFraction,
+    GovernorTimelockControl
+{
     constructor(IVotes _token, TimelockController _timelock)
         Governor("MyGovernor")
-        GovernorSettings(10800 /* 6 hours */, 21600 /* 12 hours */, 0)
+        GovernorSettings(10800, /* 6 hours */ 21600, /* 12 hours */ 0)
         GovernorVotes(_token)
         GovernorVotesQuorumFraction(1)
         GovernorTimelockControl(_timelock)
@@ -117,21 +136,11 @@ contract WorldPvpPoolGovernor is Governor, GovernorSettings, GovernorCountingSim
 
     // The following functions are overrides required by Solidity.
 
-    function votingDelay()
-        public
-        view
-        override(Governor, GovernorSettings)
-        returns (uint256)
-    {
+    function votingDelay() public view override(Governor, GovernorSettings) returns (uint256) {
         return super.votingDelay();
     }
 
-    function votingPeriod()
-        public
-        view
-        override(Governor, GovernorSettings)
-        returns (uint256)
-    {
+    function votingPeriod() public view override(Governor, GovernorSettings) returns (uint256) {
         return super.votingPeriod();
     }
 
@@ -162,44 +171,40 @@ contract WorldPvpPoolGovernor is Governor, GovernorSettings, GovernorCountingSim
         return super.proposalNeedsQueuing(proposalId);
     }
 
-    function proposalThreshold()
-        public
-        view
-        override(Governor, GovernorSettings)
-        returns (uint256)
-    {
+    function proposalThreshold() public view override(Governor, GovernorSettings) returns (uint256) {
         return super.proposalThreshold();
     }
 
-    function _queueOperations(uint256 proposalId, address[] memory targets, uint256[] memory values, bytes[] memory calldatas, bytes32 descriptionHash)
-        internal
-        override(Governor, GovernorTimelockControl)
-        returns (uint48)
-    {
+    function _queueOperations(
+        uint256 proposalId,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory calldatas,
+        bytes32 descriptionHash
+    ) internal override(Governor, GovernorTimelockControl) returns (uint48) {
         return super._queueOperations(proposalId, targets, values, calldatas, descriptionHash);
     }
 
-    function _executeOperations(uint256 proposalId, address[] memory targets, uint256[] memory values, bytes[] memory calldatas, bytes32 descriptionHash)
-        internal
-        override(Governor, GovernorTimelockControl)
-    {
+    function _executeOperations(
+        uint256 proposalId,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory calldatas,
+        bytes32 descriptionHash
+    ) internal override(Governor, GovernorTimelockControl) {
         super._executeOperations(proposalId, targets, values, calldatas, descriptionHash);
     }
 
-    function _cancel(address[] memory targets, uint256[] memory values, bytes[] memory calldatas, bytes32 descriptionHash)
-        internal
-        override(Governor, GovernorTimelockControl)
-        returns (uint256)
-    {
+    function _cancel(
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory calldatas,
+        bytes32 descriptionHash
+    ) internal override(Governor, GovernorTimelockControl) returns (uint256) {
         return super._cancel(targets, values, calldatas, descriptionHash);
     }
 
-    function _executor()
-        internal
-        view
-        override(Governor, GovernorTimelockControl)
-        returns (address)
-    {
+    function _executor() internal view override(Governor, GovernorTimelockControl) returns (address) {
         return super._executor();
     }
 }

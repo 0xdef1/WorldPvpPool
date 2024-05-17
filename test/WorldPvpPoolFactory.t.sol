@@ -5,7 +5,6 @@ import {Test, console} from "forge-std/Test.sol";
 import {WorldPvpPool, ERC20} from "../src/WorldPvpPool.sol";
 import {WorldPvpPoolFactory} from "../src/WorldPvpPoolFactory.sol";
 
-
 // Tests should be run with --fork-url option, with a Base mainnet rpc.
 // Address 'potus' should have some balance of 'USA' token to wrap + vote with
 contract WorldPvpPoolFactoryTest is Test {
