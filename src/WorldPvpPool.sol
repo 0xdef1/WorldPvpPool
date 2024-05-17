@@ -50,7 +50,7 @@ contract WorldPvpPool is ERC20, ERC20Votes, ERC20Permit {
         countryToken = _countryToken;
     }
 
-    function initialize() public {
+    function initialize() external {
         if (governor != address(0) || timelock != address(0)) revert AlreadyInitialized();
 
         address[] memory proposers = new address[](0);
@@ -69,7 +69,7 @@ contract WorldPvpPool is ERC20, ERC20Votes, ERC20Permit {
         emit Initialize(countryToken, timelock, governor);
     }
 
-    function deposit(uint256 amount) public lock {
+    function deposit(uint256 amount) external lock {
         // Be careful of tax shenanigans
         uint256 balanceBefore = ERC20(countryToken).balanceOf(address(this));
         ERC20(countryToken).transferFrom(msg.sender, address(this), amount);
@@ -80,7 +80,7 @@ contract WorldPvpPool is ERC20, ERC20Votes, ERC20Permit {
         emit Deposit(msg.sender, amount, mintAmount);
     }
 
-    function withdraw(uint256 amount) public lock {
+    function withdraw(uint256 amount) external lock {
         _burn(msg.sender, amount);
 
         // Taxes will reduce the actual amount of countryToken received
