@@ -5,7 +5,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {WorldPvpPool, ERC20, WorldPvpPoolGovernor, GovernorCountingSimple} from "../src/WorldPvpPool.sol";
 
 
-contract CounterTest is Test {
+contract WorldPvpPoolTest is Test {
     WorldPvpPool pool;
     address usaToken = 0x3BCB4D6523b98806Dca200833723fFb32bA672c5;
     address potus = 0x5010D54ADB45b39f97a663fF135d93872A7740f2;
@@ -90,7 +90,7 @@ contract CounterTest is Test {
         // Execute the proposal
         vm.roll(start + 2 days + 4);
         vm.warp(gov.proposalEta(proposalId) + 1);
-        vm.expectEmit(true, true, false, false);
+        vm.expectEmit(true, true, false, false, address(pool));
         emit WorldPvpPool.ArbitraryCall(address(0), "arbitrary calldata");
         gov.execute(targets, values, calldatas, keccak256("test proposal"));
         vm.stopPrank();
