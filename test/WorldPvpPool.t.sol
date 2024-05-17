@@ -79,18 +79,18 @@ contract WorldPvpPoolTest is Test {
         vm.stopPrank();
 
         // Vote on the proposal
-        vm.roll(start + 1 days + 2);
+        vm.roll(start + gov.votingDelay() + 2);
         vm.startPrank(potus);
         gov.castVote(proposalId, uint8(GovernorCountingSimple.VoteType.For));
         vm.stopPrank();
 
         // Queue the proposal into the timelock
-        vm.roll(start + 2 days + 3);
+        vm.roll(start + gov.votingDelay() + gov.votingPeriod() + 3);
         vm.startPrank(potus);
         gov.queue(targets, values, calldatas, keccak256("test proposal"));
         
         // Execute the proposal
-        vm.roll(start + 2 days + 4);
+        vm.roll(start + gov.votingDelay() + gov.votingPeriod() + 4);
         vm.warp(gov.proposalEta(proposalId) + 1);
         vm.expectEmit(true, true, false, false, address(pool));
         emit WorldPvpPool.ArbitraryCall(address(0), "arbitrary calldata");

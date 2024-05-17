@@ -109,7 +109,7 @@ contract WorldPvpPool is ERC20, ERC20Votes, ERC20Permit {
 contract WorldPvpPoolGovernor is Governor, GovernorSettings, GovernorCountingSimple, GovernorVotes, GovernorVotesQuorumFraction, GovernorTimelockControl {
     constructor(IVotes _token, TimelockController _timelock)
         Governor("MyGovernor")
-        GovernorSettings(1 days, 1 days, 0)
+        GovernorSettings(10800 /* 6 hours */, 21600 /* 12 hours */, 0)
         GovernorVotes(_token)
         GovernorVotesQuorumFraction(1)
         GovernorTimelockControl(_timelock)
